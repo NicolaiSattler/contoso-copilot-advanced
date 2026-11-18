@@ -122,6 +122,15 @@ paths:
         '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/ServiceRequest' } } } }
         '400': { $ref: '#/components/responses/BadRequest' }
         '404': { $ref: '#/components/responses/NotFound' }
+  /api/service-requests/overdue:
+    get:
+      tags: [service-requests]
+      summary: List overdue service requests
+      parameters:
+        - { name: asOf, in: query, required: false, description: Check date; defaults to today, schema: { type: string, format: date } }
+      responses:
+        '200': { description: Overdue requests, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/OverdueServiceRequest' } } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
   /api/service-requests/{id}:
     get:
       tags: [service-requests]
@@ -213,3 +222,11 @@ components:
         status: { type: string, enum: [open, in-progress, closed] }
         createdAt: { type: string, format: date }
         closedAt: { type: [string, 'null'], format: date }
+    OverdueServiceRequest:
+      allOf:
+        - { $ref: '#/components/schemas/ServiceRequest' }
+        - type: object
+          required: [dueDate, daysOverdue]
+          properties:
+            dueDate: { type: string, format: date }
+            daysOverdue: { type: integer, minimum: 1 }

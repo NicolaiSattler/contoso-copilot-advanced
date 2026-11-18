@@ -1,5 +1,6 @@
 import type { Router } from '../http/router.ts';
 import { badRequest, notFound } from '../http/errors.ts';
+import { isIsoDate, listOverdueServiceRequests } from '../domain/serviceRequests.ts';
 import type { MemberRepository } from '../repositories/memberRepository.ts';
 import type { ServiceRequestRepository } from '../repositories/serviceRequestRepository.ts';
 import type { RequestCategory, RequestStatus } from '../repositories/types.ts';
@@ -20,6 +21,12 @@ export function registerServiceRequestRoutes(
     }
     const memberId = query.get('memberId') ?? undefined;
     return { body: deps.requests.list({ status: status as RequestStatus | undefined, memberId }) };
+  });
+
+  router.get('/api/service-requests/overdue', ({ query }) => {
+    const asOf = query.get('asOf') ?? deps.today();
+    if (!isIsoDate(asOf)) throw badRequest('asOf must be an ISO date (YYYY-MM-DD)');
+    return { body: listOverdueServiceRequests(deps.requests.list(), asOf) };
   });
 
   router.get('/api/service-requests/:id', ({ params }) => {
