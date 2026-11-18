@@ -2,14 +2,23 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const HOOK = fileURLToPath(new URL('../guardrails.mjs', import.meta.url));
+const hookDirectory = new URL('../', import.meta.url);
 const run = (event) => {
   const r = spawnSync(process.execPath, [HOOK], { input: JSON.stringify(event), encoding: 'utf8' });
   assert.equal(r.status, 0, r.stderr);
   return JSON.parse(r.stdout);
 };
+
+test('top-level JSON files are hook configurations', () => {
+  for (const file of readdirSync(hookDirectory).filter((name) => name.endsWith('.json'))) {
+    const config = JSON.parse(readFileSync(new URL(file, hookDirectory), 'utf8'));
+    assert.ok(config.hooks && typeof config.hooks === 'object' && !Array.isArray(config.hooks), file);
+  }
+});
 
 test('allows a normal read', () => {
   assert.deepEqual(run({ toolName: 'view', toolArgs: { path: 'api/src/domain/pension.ts' } }), {});

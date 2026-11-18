@@ -8,7 +8,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const policy = JSON.parse(readFileSync(join(here, 'guardrails.policy.json'), 'utf8'));
+const policy = JSON.parse(readFileSync(join(here, 'guardrails.policy'), 'utf8'));
 
 const event = JSON.parse(readFileSync(0, 'utf8'));
 if (typeof event.toolName !== 'string') throw new Error('Expected a preToolUse event with toolName');
