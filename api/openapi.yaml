@@ -73,6 +73,17 @@ paths:
       responses:
         '200': { description: Employer }
         '404': { $ref: '#/components/responses/NotFound' }
+  /api/employers/{id}/contributions:
+    get:
+      tags: [employers]
+      summary: Yearly employer and employee contributions by year
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, example: E-200 } }
+        - { name: year, in: query, required: true, schema: { type: string, pattern: '^\d+$', example: '2025' }, description: 'The contribution year (non-negative integer)' }
+      responses:
+        '200': { description: Contribution summary, content: { application/json: { schema: { $ref: '#/components/schemas/EmployerContributionSummary' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
   /api/projections:
     post:
       tags: [projections]
@@ -230,3 +241,11 @@ components:
           properties:
             dueDate: { type: string, format: date }
             daysOverdue: { type: integer, minimum: 1 }
+    EmployerContributionSummary:
+      type: object
+      required: [year, totalEmployerContribution, totalEmployeeContribution, contributingMembers]
+      properties:
+        year: { type: integer, description: 'The contribution year' }
+        totalEmployerContribution: { type: number, description: 'Sum of employer contributions for the year (EUR)' }
+        totalEmployeeContribution: { type: number, description: 'Sum of employee contributions for the year (EUR)' }
+        contributingMembers: { type: integer, description: 'Number of members with contributions in that year' }

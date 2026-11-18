@@ -1,5 +1,6 @@
 import type { SchemeParameters } from './scheme.ts';
 import { SCHEME_2026 } from './scheme.ts';
+import type { Contribution } from '../repositories/types.ts';
 
 /** Rounds a money amount to cents (half away from zero). */
 export function roundMoney(amount: number): number {
@@ -135,3 +136,40 @@ export function projectPension(input: ProjectionInput, scheme: SchemeParameters 
     scheme: scheme.id,
   };
 }
+
+/**
+ * Aggregates yearly contributions by employer for a specific year.
+ * Per docs/domain/scheme-rules.md R6: Contribution = 27% × pensionable salary; employer pays 60%, employee 40%.
+ * Returns the totals and the count of members who made contributions that year.
+ * If no contributions are found, returns zero summary for the requested year.
+ */
+export interface YearlyContributionSummary {
+  year: number;
+  totalEmployerContribution: number;
+  totalEmployeeContribution: number;
+  contributingMembers: number;
+}
+
+export function aggregateYearlyContributions(contributions: Contribution[], requestedYear: number): YearlyContributionSummary {
+  if (contributions.length === 0) {
+    return { year: requestedYear, totalEmployerContribution: 0, totalEmployeeContribution: 0, contributingMembers: 0 };
+  }
+
+  let totalEmployer = 0;
+  let totalEmployee = 0;
+  const memberIds = new Set<string>();
+
+  for (const c of contributions) {
+    totalEmployer = roundMoney(totalEmployer + c.employerContribution);
+    totalEmployee = roundMoney(totalEmployee + c.employeeContribution);
+    memberIds.add(c.memberId);
+  }
+
+  return {
+    year: requestedYear,
+    totalEmployerContribution: totalEmployer,
+    totalEmployeeContribution: totalEmployee,
+    contributingMembers: memberIds.size,
+  };
+}
+

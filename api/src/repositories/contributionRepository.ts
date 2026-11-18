@@ -31,4 +31,20 @@ export class ContributionRepository {
       .get(memberId) as { total: number };
     return row.total;
   }
+
+  /**
+   * Query contributions for all members of an employer in a specific year.
+   * Uses a SQL join to efficiently fetch employer members and their contributions.
+   */
+  listByEmployerAndYear(employerId: string, year: number): Contribution[] {
+    return (this.db.prepare(`
+      SELECT c.member_id, c.year, c.full_time_salary, c.part_time_factor, 
+             c.pensionable_salary, c.accrual, c.employer_contribution, c.employee_contribution
+      FROM contributions c
+      JOIN members m ON c.member_id = m.id
+      WHERE m.employer_id = ? AND c.year = ?
+      ORDER BY c.member_id
+    `)
+      .all(employerId, year) as unknown as ContributionRow[]).map(toContribution);
+  }
 }
